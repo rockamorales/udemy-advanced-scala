@@ -1,4 +1,4 @@
-package lectures.part3concurrency
+package lectures.part3async
 
 import java.util.concurrent.Executors
 
