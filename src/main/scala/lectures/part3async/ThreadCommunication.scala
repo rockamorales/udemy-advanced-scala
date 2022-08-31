@@ -1,5 +1,7 @@
 package lectures.part3async
 
+import scala.collection.mutable
+import scala.util.Random
 object ThreadCommunication extends App {
   /*
     the producer-consumer problem
@@ -108,7 +110,60 @@ object ThreadCommunication extends App {
     producer.start()
   }
 
-  smartProdCons()
+  // smartProdCons()
+
+  /* Level 2: at the producer/consumer problem
+    producer -> [? ? ?] -> consumer
+
+    1 problem: producer and consumer may block each other
+
+   */
+
+  def prodConsLargeBuffer(): Unit = {
+    val buffer: mutable.Queue[Int] = new mutable.Queue[Int]
+    val capacity = 3
+    val consumer = new Thread(() => {
+      val random = new Random()
+      while (true) {
+        buffer.synchronized {
+          if (buffer.isEmpty) {
+            println("[consumer] buffer empty, waiting...")
+            buffer.wait()
+          }
+          // there must be at least ONE value in the buffer
+          val x = buffer.dequeue()
+          println(s"[consumer] consumed ${x}")
+
+          // todo
+          buffer.notify()
+          Thread.sleep(random.nextInt(500))
+        }
+      }
+    })
+
+    val producer = new Thread(() => {
+      val random = new Random()
+      var i = 0
+      while(true) {
+        buffer.synchronized {
+          if (buffer.size == capacity) {
+            println("[producer] buffer is full, waiting...")
+            buffer.wait()
+          }
+          // there emust be at least ONE EMPTY SPACE in the buffer
+          println(s"[producer] producing ${i}")
+          buffer.enqueue(i)
+          // todo
+          buffer.notify()
+          i+=1
+        }
+      }
+    })
+    consumer.start()
+    producer.start()
+  }
+
+  prodConsLargeBuffer()
 }
 
 
